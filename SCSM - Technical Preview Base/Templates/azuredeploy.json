@@ -2,10 +2,344 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "scsmtpType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "SCSMTPDC01Name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "AdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "AdminPassword": {
+            "type": "securestring"
+        },
+        "SCSMTPDC01WindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        },
+        "SCSMTPSM01Name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "SCSMTPSM01WindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        },
+        "SCSMTPDW01Name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "SCSMTPDW01WindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        }
     },
-    "variables": {
-    },
+  "variables": {
+    "scsmtpName": "[concat('scsmtp', uniqueString(resourceGroup().id))]",
+    "scsmvnetPrefix": "10.0.0.0/16",
+    "scsmvnetSubnet1Name": "Subnet-1",
+    "scsmvnetSubnet1Prefix": "10.0.0.0/24",
+    "SCSMTPDC01ImagePublisher": "MicrosoftWindowsServer",
+    "SCSMTPDC01ImageOffer": "WindowsServer",
+    "SCSMTPDC01OSDiskName": "SCSMTPDC01OSDisk",
+    "SCSMTPDC01VmSize": "Standard_D1",
+    "SCSMTPDC01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
+    "SCSMTPDC01SubnetRef": "[concat(variables('SCSMTPDC01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
+    "SCSMTPDC01NicName": "[concat(parameters('SCSMTPDC01Name'), 'NetworkInterface')]",
+    "SQLImagePublisher": "MicrosoftSQLServer",
+    "SQLImageOffer": "WindowsServer",
+    "SCSMTPSM01OSDiskName": "SCSMTPSM01OSDisk",
+    "SQLVmSize": "Standard_D2",
+    "SCSMTPSM01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
+    "SCSMTPSM01SubnetRef": "[concat(variables('SCSMTPSM01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
+    "SCSMTPSM01NicName": "[concat(parameters('SCSMTPSM01Name'), 'NetworkInterface')]",
+    "SCSMTPDW01OSDiskName": "SCSMTPDW01OSDisk",
+    "SCSMTPDW01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
+    "SCSMTPDW01SubnetRef": "[concat(variables('SCSMTPDW01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
+    "StorageAccountContainerName": "vhds",
+    "SCSMTPDW01NicName": "[concat(parameters('SCSMTPDW01Name'), 'NetworkInterface')]"
+  },
     "resources": [
+        {
+            "name": "[variables('scsmtpName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "scsmtp"
+            },
+            "properties": {
+                "accountType": "[parameters('scsmtpType')]"
+            }
+        },
+        {
+            "name": "scsmvnet",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "scsmvnet"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('scsmvnetPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('scsmvnetSubnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('scsmvnetSubnet1Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('SCSMTPDC01NicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]"
+            ],
+            "tags": {
+                "displayName": "SCSMTPDC01Nic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('SCSMTPDC01SubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('SCSMTPDC01Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('scsmtpName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPDC01NicName'))]"
+            ],
+            "tags": {
+                "displayName": "SCSMTPDC01"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('SCSMTPDC01VmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('SCSMTPDC01Name')]",
+                    "adminUsername": "[parameters('AdminUsername')]",
+                    "adminPassword": "[parameters('AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('SCSMTPDC01ImagePublisher')]",
+                        "offer": "[variables('SCSMTPDC01ImageOffer')]",
+                        "sku": "[parameters('SCSMTPDC01WindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "SCSMTPDC01OSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('scsmtpName'), '.blob.core.windows.net/', variables('StorageAccountContainerName'), '/', variables('SCSMTPDC01OSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('SCSMTPDC01NicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('SCSMTPSM01NicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]"
+            ],
+            "tags": {
+                "displayName": "SCSMTPSM01Nic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('SCSMTPSM01SubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('SCSMTPSM01Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('scsmtpName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPSM01NicName'))]"
+            ],
+            "tags": {
+                "displayName": "SCSMTPSM01"
+            },
+            "properties": {
+              "hardwareProfile": {
+                "vmSize": "[variables('SQLVmSize')]"
+              },
+                "osProfile": {
+                    "computerName": "[parameters('SCSMTPSM01Name')]",
+                    "adminUsername": "[parameters('AdminUsername')]",
+                    "adminPassword": "[parameters('AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('SQLImagePublisher')]",
+                        "offer": "[variables('SQLImageOffer')]",
+                        "sku": "Enterprise",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "SCSMTPSM01OSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('scsmtpName'), '.blob.core.windows.net/', variables('StorageAccountContainerName'), '/', variables('SCSMTPSM01OSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('SCSMTPSM01NicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('SCSMTPDW01NicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]"
+            ],
+            "tags": {
+                "displayName": "SCSMTPDW01Nic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('SCSMTPDW01SubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('SCSMTPDW01Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('scsmtpName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPDW01NicName'))]"
+            ],
+            "tags": {
+                "displayName": "SCSMTPDW01"
+            },
+            "properties": {
+              "hardwareProfile": {
+                "vmSize": "[variables('SQLVmSize')]"
+              },
+                "osProfile": {
+                    "computerName": "[parameters('SCSMTPDW01Name')]",
+                    "adminUsername": "[parameters('AdminUsername')]",
+                    "adminPassword": "[parameters('AdminPassword')]"
+                },
+              "storageProfile": {
+                "imageReference": {
+                  "publisher": "[variables('SQLImagePublisher')]",
+                  "offer": "[variables('SQLImageOffer')]",
+                  "sku": "Enterprise",
+                  "version": "latest"
+                },
+                "osDisk": {
+                  "name": "SCSMTPDW01OSDisk",
+                  "vhd": {
+                    "uri": "[concat('http://', variables('scsmtpName'), '.blob.core.windows.net/', variables('StorageAccountContainerName'), '/', variables('SCSMTPDW01OSDiskName'), '.vhd')]"
+                  },
+                  "caching": "ReadWrite",
+                  "createOption": "FromImage"
+                }
+              },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('SCSMTPDW01NicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
     ],
     "outputs": {
     }
