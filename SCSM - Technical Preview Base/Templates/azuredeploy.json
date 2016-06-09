@@ -1,68 +1,87 @@
 ﻿{
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
-        "scsmtpType": {
-            "type": "string",
-            "defaultValue": "Standard_LRS",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_ZRS",
-                "Standard_GRS",
-                "Standard_RAGRS",
-                "Premium_LRS"
-            ]
-        },
-        "SCSMTPDC01Name": {
-            "type": "string",
-            "minLength": 1
-        },
-        "AdminUserName": {
-            "type": "string",
-            "minLength": 1
-        },
-        "AdminPassword": {
-            "type": "securestring"
-        },
-        "SCSMTPDC01WindowsOSVersion": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "allowedValues": [
-                "2008-R2-SP1",
-                "2012-Datacenter",
-                "2012-R2-Datacenter",
-                "Windows-Server-Technical-Preview"
-            ]
-        },
-        "SCSMTPSM01Name": {
-            "type": "string",
-            "minLength": 1
-        },
-        "SCSMTPSM01WindowsOSVersion": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "allowedValues": [
-                "2008-R2-SP1",
-                "2012-Datacenter",
-                "2012-R2-Datacenter",
-                "Windows-Server-Technical-Preview"
-            ]
-        },
-        "SCSMTPDW01Name": {
-            "type": "string",
-            "minLength": 1
-        },
-        "SCSMTPDW01WindowsOSVersion": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "allowedValues": [
-                "2008-R2-SP1",
-                "2012-Datacenter",
-                "2012-R2-Datacenter",
-                "Windows-Server-Technical-Preview"
-            ]
-        }
+  "parameters": {
+    "scsmtpType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
     },
+    "SCSMTPDC01Name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "AdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "AdminPassword": {
+      "type": "securestring"
+    },
+    "DomainAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "DomainAdminPassword": {
+      "type": "securestring"
+    },
+    "SCSMTPDC01WindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "SCSMTPSM01Name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SCSMTPSM01WindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "SCSMTPDW01Name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SCSMTPDW01WindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
+  },
   "variables": {
     "scsmtpName": "[concat('scsmtp', uniqueString(resourceGroup().id))]",
     "scsmvnetPrefix": "10.0.0.0/16",
@@ -86,7 +105,8 @@
     "SCSMTPDW01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
     "SCSMTPDW01SubnetRef": "[concat(variables('SCSMTPDW01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
     "StorageAccountContainerName": "vhds",
-    "SCSMTPDW01NicName": "[concat(parameters('SCSMTPDW01Name'), 'NetworkInterface')]"
+    "SCSMTPDW01NicName": "[concat(parameters('SCSMTPDW01Name'), 'NetworkInterface')]",
+    "DCextConfigurationFunction": "DCConfig.ps1\\DCConfig"
   },
     "resources": [
         {
@@ -196,7 +216,44 @@
                         }
                     ]
                 }
-            }
+            },
+            "resources": [
+                {
+                    "name": "DCext",
+                    "type": "extensions",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2015-06-15",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('SCSMTPDC01Name'))]"
+                    ],
+                    "tags": {
+                        "displayName": "DCext"
+                    },
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.9",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "modulesUrl": "[concat(parameters('_artifactsLocation'), '/', 'dsc.zip')]",
+                            "sasToken": "[parameters('_artifactsLocationSasToken')]",
+                            "configurationFunction": "[variables('DCextConfigurationFunction')]",
+                            "properties": {
+                            "nodeName": "localhost",
+                              "DomainAdminCredentials": {
+                                "UserName": "[parameters('AdminUserName')]",
+                                "Password": "PrivateSettingsRef:AdminPassword"
+                              }
+                          }
+                        },
+                      "protectedSettings": {
+                        "Items": {
+                          "AdminPassword": "[parameters('AdminPassword')]"
+                        }
+                      }
+                    }
+                }
+            ]
         },
         {
             "name": "[variables('SCSMTPSM01NicName')]",
