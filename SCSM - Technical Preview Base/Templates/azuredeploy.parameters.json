@@ -2,5 +2,26 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "SCSMTPDC01Name": {
+            "value": "SCSMTPDC01"
+        },
+        "AdminUserName": {
+            "value": "s-admin"
+        },
+        "AdminPassword": {
+            "value": "Njc9addh"
+        },
+        "DomainAdminUserName": {
+            "value": "scsmtp\\s-admin"
+        },
+        "DomainAdminPassword": {
+            "value": "Njc9addh"
+        },
+        "SCSMTPSM01Name": {
+            "value": "SCSMTPSM01"
+        },
+        "SCSMTPDW01Name": {
+            "value": "SCSMTPDW01"
+        }
     }
 }
