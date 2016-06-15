@@ -106,7 +106,8 @@
     "SCSMTPDW01SubnetRef": "[concat(variables('SCSMTPDW01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
     "StorageAccountContainerName": "vhds",
     "SCSMTPDW01NicName": "[concat(parameters('SCSMTPDW01Name'), 'NetworkInterface')]",
-    "DCextConfigurationFunction": "DCConfig.ps1\\DCConfig"
+    "DCextConfigurationFunction": "DCConfig.ps1\\DCConfig",
+    "SMextConfigurationFunction": "SMConfig.ps1\\Main"
   },
     "resources": [
         {
@@ -324,7 +325,44 @@
                         }
                     ]
                 }
-            }
+            },
+            "resources": [
+                {
+                    "name": "SMext",
+                    "type": "extensions",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2015-06-15",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('SCSMTPSM01Name'))]"
+                    ],
+                    "tags": {
+                        "displayName": "SMext"
+                    },
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.9",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "modulesUrl": "[concat(parameters('_artifactsLocation'), '/', 'dsc.zip')]",
+                            "sasToken": "[parameters('_artifactsLocationSasToken')]",
+                            "configurationFunction": "[variables('SMextConfigurationFunction')]",
+                          "properties": {
+                            "nodeName": "localhost",
+                            "DomainAdminCredentials": {
+                              "UserName": "[parameters('DomainAdminUserName')]",
+                              "Password": "PrivateSettingsRef:DomainAdminPassword"
+                            }
+                          }
+                        },
+                      "protectedSettings": {
+                        "Items": {
+                          "AdminPassword": "[parameters('DomainAdminPassword')]"
+                        }
+                      }
+                    }
+                }
+            ]
         },
         {
             "name": "[variables('SCSMTPDW01NicName')]",

@@ -38,6 +38,7 @@
     <None Include="DSC\ConfigurationData.psd1" />
     <None Include="DSC\DCConfig.ps1" />
     <None Include="DSC\dscmetadata.json" />
+    <Content Include="DSC\SMConfig.ps1" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

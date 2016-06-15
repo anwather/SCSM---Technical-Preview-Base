@@ -1,1 +1,1 @@
-{"ConfigurationData":"ConfigurationData.psd1","Modules":["xActiveDirectory","xNetworking"]}
+{"ConfigurationData":"ConfigurationData.psd1","Modules":["xActiveDirectory","xNetworking","xSQLPs","xComputerManagement"]}

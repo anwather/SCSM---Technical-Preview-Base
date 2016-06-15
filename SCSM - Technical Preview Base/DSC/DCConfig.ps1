@@ -20,6 +20,7 @@ Node $nodeName
             RebootNodeIfNeeded = $true
             ActionAfterReboot = 'ContinueConfiguration'
             AllowModuleOverwrite = $true
+
         }
 
         WindowsFeature DNS 
@@ -67,8 +68,8 @@ Node $nodeName
 	  xDNSServerAddress DnsServer_Address
         {
             Address = '127.0.0.1'
-            InterfaceAlias = $Node.InterfaceAlias
-            AddressFamily = $Node.AddressFamily
+            InterfaceAlias = 'Ethernet'
+            AddressFamily = 'IPv4'
             DependsOn = '[WindowsFeature]RSAT_AD_PowerShell'
         }      		
 
