@@ -107,7 +107,14 @@
     "StorageAccountContainerName": "vhds",
     "SCSMTPDW01NicName": "[concat(parameters('SCSMTPDW01Name'), 'NetworkInterface')]",
     "DCextConfigurationFunction": "DCConfig.ps1\\DCConfig",
-    "SMextConfigurationFunction": "SMConfig.ps1\\Main"
+    "SMextConfigurationFunction": "SMConfig.ps1\\Main",
+    "dcpipName": "dcpip",
+    "dcPiPDNSName": "dc01pipdns",
+    "smpipName": "smpip",
+    "smPiPDNSName": "sm01pipdns",
+    "dwpipName": "dwpip",
+    "dwPiPDNSName": "dw01pipdns"
+
   },
     "resources": [
         {
@@ -154,7 +161,8 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]"
+                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('dcpipName'))]"
             ],
             "tags": {
                 "displayName": "SCSMTPDC01Nic"
@@ -167,6 +175,9 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
                                 "id": "[variables('SCSMTPDC01SubnetRef')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dcpipName'))]"
                             }
                         }
                     }
@@ -262,7 +273,8 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]"
+                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('smpipName'))]"
             ],
             "tags": {
                 "displayName": "SCSMTPSM01Nic"
@@ -275,6 +287,9 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
                                 "id": "[variables('SCSMTPSM01SubnetRef')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('smpipName'))]"
                             }
                         }
                     }
@@ -370,7 +385,8 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]"
+                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('dwpipName'))]"
             ],
             "tags": {
                 "displayName": "SCSMTPDW01Nic"
@@ -383,6 +399,9 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
                                 "id": "[variables('SCSMTPDW01SubnetRef')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dwpipName'))]"
                             }
                         }
                     }
@@ -432,6 +451,54 @@
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('SCSMTPDW01NicName'))]"
                         }
                     ]
+                }
+            }
+        },
+        {
+            "name": "[variables('dcpipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "dcpip"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dcPiPDnsName')]"
+                }
+            }
+        },
+        {
+            "name": "[variables('smpipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "smpip"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('smPiPDNSName')]"
+                }
+            }
+        },
+        {
+            "name": "[variables('dwpipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "dwpip"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dwPiPDNSName')]"
                 }
             }
         }
