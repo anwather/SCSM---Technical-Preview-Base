@@ -55,20 +55,6 @@
         "Windows-Server-Technical-Preview"
       ]
     },
-    "SCSMTPDW01Name": {
-      "type": "string",
-      "minLength": 1
-    },
-    "SCSMTPDW01WindowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter",
-        "Windows-Server-Technical-Preview"
-      ]
-    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -101,19 +87,13 @@
     "SCSMTPSM01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
     "SCSMTPSM01SubnetRef": "[concat(variables('SCSMTPSM01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
     "SCSMTPSM01NicName": "[concat(parameters('SCSMTPSM01Name'), 'NetworkInterface')]",
-    "SCSMTPDW01OSDiskName": "SCSMTPDW01OSDisk",
-    "SCSMTPDW01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
-    "SCSMTPDW01SubnetRef": "[concat(variables('SCSMTPDW01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
     "StorageAccountContainerName": "vhds",
-    "SCSMTPDW01NicName": "[concat(parameters('SCSMTPDW01Name'), 'NetworkInterface')]",
     "DCextConfigurationFunction": "DCConfig.ps1\\DCConfig",
-    "SMextConfigurationFunction": "SMConfig.ps1\\Main",
+    "SMextConfigurationFunction": "DBConfig.ps1\\Main",
     "dcpipName": "dcpip",
     "dcPiPDNSName": "dc01pipdns",
     "smpipName": "smpip",
-    "smPiPDNSName": "sm01pipdns",
-    "dwpipName": "dwpip",
-    "dwPiPDNSName": "dw01pipdns"
+    "smPiPDNSName": "sm01pipdns"
 
   },
     "resources": [
@@ -380,81 +360,6 @@
             ]
         },
         {
-            "name": "[variables('SCSMTPDW01NicName')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]",
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('dwpipName'))]"
-            ],
-            "tags": {
-                "displayName": "SCSMTPDW01Nic"
-            },
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[variables('SCSMTPDW01SubnetRef')]"
-                            },
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dwpipName'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "name": "[parameters('SCSMTPDW01Name')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('scsmtpName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPDW01NicName'))]"
-            ],
-            "tags": {
-                "displayName": "SCSMTPDW01"
-            },
-            "properties": {
-              "hardwareProfile": {
-                "vmSize": "[variables('SQLVmSize')]"
-              },
-                "osProfile": {
-                    "computerName": "[parameters('SCSMTPDW01Name')]",
-                    "adminUsername": "[parameters('AdminUsername')]",
-                    "adminPassword": "[parameters('AdminPassword')]"
-                },
-              "storageProfile": {
-                "imageReference": {
-                  "publisher": "[variables('SQLImagePublisher')]",
-                  "offer": "[variables('SQLImageOffer')]",
-                  "sku": "Enterprise",
-                  "version": "latest"
-                },
-                "osDisk": {
-                  "name": "SCSMTPDW01OSDisk",
-                  "vhd": {
-                    "uri": "[concat('http://', variables('scsmtpName'), '.blob.core.windows.net/', variables('StorageAccountContainerName'), '/', variables('SCSMTPDW01OSDiskName'), '.vhd')]"
-                  },
-                  "caching": "ReadWrite",
-                  "createOption": "FromImage"
-                }
-              },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('SCSMTPDW01NicName'))]"
-                        }
-                    ]
-                }
-            }
-        },
-        {
             "name": "[variables('dcpipName')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "location": "[resourceGroup().location]",
@@ -483,22 +388,6 @@
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
                     "domainNameLabel": "[variables('smPiPDNSName')]"
-                }
-            }
-        },
-        {
-            "name": "[variables('dwpipName')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
-            "dependsOn": [ ],
-            "tags": {
-                "displayName": "dwpip"
-            },
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": {
-                    "domainNameLabel": "[variables('dwPiPDNSName')]"
                 }
             }
         }
