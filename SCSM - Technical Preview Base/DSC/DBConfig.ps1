@@ -32,9 +32,10 @@ Node $nodeName
         
             xWaitForADDomain DomainWait
 			{
-				Domain = $Node.DomainName
+				DomainName = $Node.DomainName
 				RetryCount = $Node.RetryCount
 				RetryIntervalSec = $Node.RetryIntervalSec
+				DomainUserCredential = $DomainAdminCredentials
 			}
 	  
 			xComputer Join_Domain
@@ -42,7 +43,7 @@ Node $nodeName
                 Name = $env:COMPUTERNAME
                 Credential = $DomainAdminCredentials
                 DomainName = $Node.DomainName
-				DependsOn = "[xDNSServerAddress]DNS_Settings"
+				DependsOn = "[xWaitForADDomain]DomainWait"
 				
             }
 
