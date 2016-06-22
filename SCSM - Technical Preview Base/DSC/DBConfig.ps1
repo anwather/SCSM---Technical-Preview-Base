@@ -22,7 +22,13 @@ Node $nodeName
 				AllowModuleOverwrite = $true
 
 			}
-	  
+			
+			WindowsFeature RSAT_AD_PowerShell 
+				{
+					Ensure = 'Present'
+					Name   = 'RSAT-AD-PowerShell'
+				}
+			
 			xDNSServerAddress DNS_Settings
             {
 				Address = $Node.DnsServerAddress
@@ -36,6 +42,7 @@ Node $nodeName
 				RetryCount = $Node.RetryCount
 				RetryIntervalSec = $Node.RetryIntervalSec
 				DomainUserCredential = $DomainAdminCredentials
+				DependsOn = "[xDNSServerAddress]DNS_Settings","[WindowsFeature]RSAT_AD_PowerShell"
 			}
 	  
 			xComputer Join_Domain
