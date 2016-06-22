@@ -9,7 +9,7 @@ $NodeName = 'localhost',
 $DomainAdminCredentials
 )
 
-Import-DscResource -ModuleName PSDesiredStateConfiguration,xNetWorking,xComputerManagement,xSQlPs
+Import-DscResource -ModuleName PSDesiredStateConfiguration,xNetWorking,xComputerManagement,xSQlPs,xActiveDirectory
 
 Node $nodeName
   {
@@ -30,13 +30,20 @@ Node $nodeName
 				AddressFamily = $Node.AddressFamily
 			}
         
-            xComputer Join_Domain
+            xWaitForADDomain DomainWait
+			{
+				Domain = $Node.DomainName
+				RetryCount = $Node.RetryCount
+				RetryIntervalSec = $Node.RetryIntervalSec
+			}
+	  
+			xComputer Join_Domain
             {
                 Name = $env:COMPUTERNAME
                 Credential = $DomainAdminCredentials
                 DomainName = $Node.DomainName
 				DependsOn = "[xDNSServerAddress]DNS_Settings"
-		
+				
             }
 
 		    WindowsFeature NetFx35_Install

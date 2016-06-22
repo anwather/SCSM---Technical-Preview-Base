@@ -284,6 +284,7 @@
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('scsmtpName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPSM01NicName'))]"
+              
             ],
             "tags": {
                 "displayName": "SCSMTPSM01"
