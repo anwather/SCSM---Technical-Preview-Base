@@ -65,7 +65,7 @@ Node $nodeName
 			{
 				InstanceName = "SCCM"           
 				SourcePath = $Node.SqlSourcePath
-				Features = 'SQLEngine,SSRS,SSMS,ADV_SSMS'
+				Features = 'SQLEngine,RS,SSMS,ADV_SSMS'
 				SqlAdministratorCredential = $DomainAdminCredentials
 				DependsOn = "[WindowsFeature]NetFx35_Install"
 				UpdateEnabled = $true
