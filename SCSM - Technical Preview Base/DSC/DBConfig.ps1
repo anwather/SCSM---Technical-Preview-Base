@@ -128,6 +128,83 @@ Node $nodeName
 				DependsOn="[WindowsFeature]WebServer"
 			}
 
+			File TempFolder
+            {
+            Ensure = "Present"
+            Type = "Directory"
+            DestinationPath = "C:\Temp"
+
+            }
+        
+			Script DownloadADK
+            {
+            TestScript = {Test-Path C:\Temp\Installers.zip}
+            SetScript = {
+                $obj = New-Object -TypeName System.Net.WebClient
+                $obj.DownloadFile('http://sccmprereqs.blob.core.windows.net/windows-adk/Installers.zip','C:\Temp\Installers.zip')
+                        }
+            GetScript = {return @{ 'Present' = $true }}
+            }
+
+			Archive UnpackADK
+            {
+            Ensure = "Present"
+            Path = "C:\Temp\Installers.zip"
+            Destination = "C:\Temp\ADKSetup"
+            DependsOn = "[Script]DownloadADK"
+            }
+
+			Script InstallADK
+            {
+            TestScript = {
+                         $obj = Get-WmiObject -Class Win32_Product | Where Name -eq "Windows Deployment Tools"
+                         if ($null -eq $obj)
+                            {
+                                return $false
+                            }
+                        else
+                            {
+                                return $true
+                            }
+                         }
+            SetScript = {
+               $cmd =  "C:\Temp\ADKSetup\adksetup.exe /Features OptionId.DeploymentTools OptionId.WindowsPreinstallationEnvironment OptionId.UserStateMigrationTool /q /norestart"
+               Invoke-Expression $cmd
+               $installed = $false
+               do
+               {
+
+               $obj = Get-WmiObject -Class Win32_Product | Where Name -eq "Windows Deployment Tools"
+               if (!($null -eq $obj))
+                {
+                $installed = $true
+                Start-Sleep 10
+                }
+               }
+               while ($installed -eq $false)
+
+                        }
+            GetScript = {return @{ 'Present' = $true }}
+            }
+
+			Script DownloadCM
+            {
+            TestScript = {Test-Path C:\Temp\CM.zip}
+            SetScript = {
+                $obj = New-Object -TypeName System.Net.WebClient
+                $obj.DownloadFile('http://sccmprereqs.blob.core.windows.net/tp-binaries/CM.zip','C:\Temp\CM.zip')
+                        }
+            GetScript = {return @{ 'Present' = $true }}
+            }
+
+			Archive UnpackCM
+            {
+            Ensure = "Present"
+            Path = "C:\Temp\CM.zip"
+            Destination = "C:\Temp\CMSetup"
+            DependsOn = "[Script]DownloadCM"
+            }
+
 			
 
 	        
