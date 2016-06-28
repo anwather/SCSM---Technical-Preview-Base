@@ -34,23 +34,14 @@ Node $nodeName
 				Address = $Node.DnsServerAddress
 				InterfaceAlias = $Node.InterfaceAlias
 				AddressFamily = $Node.AddressFamily
-			}
-        
-            xWaitForADDomain DomainWait
-			{
-				DomainName = $Node.DomainName
-				RetryCount = $Node.RetryCount
-				RetryIntervalSec = $Node.RetryIntervalSec
-				DomainUserCredential = $DomainAdminCredentials
-				DependsOn = "[xDNSServerAddress]DNS_Settings","[WindowsFeature]RSAT_AD_PowerShell"
-			}
+			}        
 	  
 			xComputer Join_Domain
             {
                 Name = $env:COMPUTERNAME
                 Credential = $DomainAdminCredentials
                 DomainName = $Node.DomainName
-				DependsOn = "[xWaitForADDomain]DomainWait"
+				DependsOn = "[xDNSServerAddress]DNS_Settings"
 				
             }
 

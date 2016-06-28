@@ -252,10 +252,11 @@
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]",
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('smpipName'))]"
-            ],
+          "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', 'scsmvnet')]",
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('smpipName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPDC01NicName'))]"
+          ],
             "tags": {
                 "displayName": "SCSMTPSM01Nic"
             },
@@ -283,7 +284,8 @@
             "apiVersion": "2015-06-15",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('scsmtpName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPSM01NicName'))]"
+              "[concat('Microsoft.Network/networkInterfaces/', variables('SCSMTPSM01NicName'))]"
+
               
             ],
             "tags": {
@@ -328,9 +330,11 @@
                     "type": "extensions",
                     "location": "[resourceGroup().location]",
                     "apiVersion": "2015-06-15",
-                    "dependsOn": [
-                        "[concat('Microsoft.Compute/virtualMachines/', parameters('SCSMTPSM01Name'))]"
-                    ],
+                  "dependsOn": [
+                    "[concat('Microsoft.Compute/virtualMachines/', parameters('SCSMTPDC01Name'))]",
+                    "[concat('Microsoft.Compute/virtualMachines/', parameters('SCSMTPSM01Name'))]",
+                    "[concat('Microsoft.Compute/virtualMachines/', parameters('SCSMTPDC01Name'),'/extensions/DCExt')]"
+                  ],
                     "tags": {
                         "displayName": "SMext"
                     },
