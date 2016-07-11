@@ -83,7 +83,7 @@
     "SQLImagePublisher": "MicrosoftSQLServer",
     "SQLImageOffer": "SQL2014-WS2012R2",
     "SCSMTPSM01OSDiskName": "SCSMTPSM01OSDisk",
-    "SQLVmSize": "Standard_D2",
+    "SQLVmSize": "Standard_D1",
     "SCSMTPSM01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'scsmvnet')]",
     "SCSMTPSM01SubnetRef": "[concat(variables('SCSMTPSM01VnetID'), '/subnets/', variables('scsmvnetSubnet1Name'))]",
     "SCSMTPSM01NicName": "[concat(parameters('SCSMTPSM01Name'), 'NetworkInterface')]",

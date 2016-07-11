@@ -9,7 +9,7 @@ $NodeName = 'localhost',
 $DomainAdminCredentials
 )
 
-Import-DscResource -ModuleName PSDesiredStateConfiguration,xNetWorking,xComputerManagement,xSQlPs,xActiveDirectory
+Import-DscResource -ModuleName PSDesiredStateConfiguration,xNetWorking,xComputerManagement,xSQlPs,xActiveDirectory,xSQLServer
 
 Node $nodeName
   {
@@ -52,7 +52,7 @@ Node $nodeName
 				DependsOn = '[xComputer]Join_Domain'
 			}
 	  
-			xSqlServerInstall Install_SqlInstanceName
+			<#xSqlServerInstall Install_SqlInstanceName
 			{
 				InstanceName = "SCCM"           
 				SourcePath = $Node.SqlSourcePath
@@ -61,6 +61,28 @@ Node $nodeName
 				DependsOn = "[WindowsFeature]NetFx35_Install"
 				UpdateEnabled = $true
 				SysAdminAccounts = $Node.SysAdminAccounts
+				#SvcAccount = $Node.SysAdminAccounts
+			}#>
+
+			xSQLServerSetup Install_SqlInstanceName
+			{
+				InstanceName = "SCCM"           
+				SourcePath = $Node.SqlSourcePath
+				SourceFolder = ""
+				Features = 'SQLEngine,RS,SSMS,ADV_SSMS'
+				SetupCredential = $DomainAdminCredentials
+				SQLSvcAccount = $DomainAdminCredentials
+				SQLSysAdminAccounts = $Node.SysAdminAccounts
+				DependsOn = "[WindowsFeature]NetFx35_Install"
+			}
+
+			xSQLServerNetwork TCPPort
+			{
+				InstanceName = "SCCM"
+				ProtocolName = "tcp"
+				RestartService = $true
+				TCPPort = "1433"
+				DependsOn = "[xSQLServerSetup]Install_SqlInstanceName"
 			}
 
 			Service StopSQLService
@@ -68,7 +90,7 @@ Node $nodeName
 				Name = "MSSQLSERVER"
 				State = "Stopped"
 				StartupType = "Disabled"
-				DependsOn = "[xSQLServerInstall]Install_SqlInstanceName"
+				#DependsOn = "[xSQLServerSetup]Install_SqlInstanceName"
             }
 
 			Service StopSQLAgent
@@ -204,6 +226,32 @@ Node $nodeName
             Destination = "C:\Temp\CMSetup"
             DependsOn = "[Script]DownloadCM"
             }
+
+			File CMDownloads
+			{
+				Ensure = "Present"
+				Type = "Directory"
+				DestinationPath = "C:\Temp\CMDownloads"
+			}
+
+			File CMUnattend
+			{
+				Ensure = "Present"
+				Type = "Directory"
+				DestinationPath = "C:\Temp\CMUnattend"
+			}
+
+			Script DownloadCMUnattend
+            {
+            TestScript = {Test-Path C:\Temp\CMUnattend\CMUnattend.ini}
+            SetScript = {
+                $obj = New-Object -TypeName System.Net.WebClient
+                $obj.DownloadFile('http://sccmprereqs.blob.core.windows.net/cm-ini/CMUnattend.ini','C:\Temp\CMUnattend\CMUnattend.ini')
+                        }
+            GetScript = {return @{ 'Present' = $true }}
+            }
+
+
 
 			
 
