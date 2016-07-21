@@ -52,24 +52,12 @@ Node $nodeName
 				DependsOn = '[xComputer]Join_Domain'
 			}
 	  
-			<#xSqlServerInstall Install_SqlInstanceName
-			{
-				InstanceName = "SCCM"           
-				SourcePath = $Node.SqlSourcePath
-				Features = 'SQLEngine,RS,SSMS,ADV_SSMS'
-				SqlAdministratorCredential = $DomainAdminCredentials
-				DependsOn = "[WindowsFeature]NetFx35_Install"
-				UpdateEnabled = $true
-				SysAdminAccounts = $Node.SysAdminAccounts
-				#SvcAccount = $Node.SysAdminAccounts
-			}#>
-
 			xSQLServerSetup Install_SqlInstanceName
 			{
 				InstanceName = "SCCM"           
 				SourcePath = $Node.SqlSourcePath
 				SourceFolder = ""
-				Features = 'SQLEngine,RS,SSMS,ADV_SSMS'
+				Features = 'SQLENGINE,RS,SSMS,ADV_SSMS'
 				SetupCredential = $DomainAdminCredentials
 				SQLSvcAccount = $DomainAdminCredentials
 				SQLSysAdminAccounts = $Node.SysAdminAccounts
