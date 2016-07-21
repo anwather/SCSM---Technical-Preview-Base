@@ -64,21 +64,12 @@ Node $nodeName
 				DependsOn = "[WindowsFeature]NetFx35_Install"
 			}
 
-			xSQLServerNetwork TCPPort
-			{
-				InstanceName = "SCCM"
-				ProtocolName = "tcp"
-				RestartService = $true
-				TCPPort = "1433"
-				DependsOn = "[xSQLServerSetup]Install_SqlInstanceName"
-			}
-
 			Service StopSQLService
             {
 				Name = "MSSQLSERVER"
 				State = "Stopped"
 				StartupType = "Disabled"
-				#DependsOn = "[xSQLServerSetup]Install_SqlInstanceName"
+				DependsOn = "[xSQLServerSetup]Install_SqlInstanceName"
             }
 
 			Service StopSQLAgent
@@ -87,6 +78,15 @@ Node $nodeName
 				State="Stopped"
 				DependsOn = "[Service]StopSQLService"
             }
+
+			xSQLServerNetwork TCPPort
+			{
+				InstanceName = "SCCM"
+				ProtocolName = "tcp"
+				RestartService = $true
+				TCPPort = "1433"
+				DependsOn = "[Service]StopSQLService"
+			}
 
 			WindowsFeature RDC
 			{
@@ -221,6 +221,24 @@ Node $nodeName
 				Type = "Directory"
 				DestinationPath = "C:\Temp\CMDownloads"
 			}
+
+			Script DownloadCMDownloads
+            {
+            TestScript = {Test-Path C:\Temp\CMDownloads.zip}
+            SetScript = {
+                $obj = New-Object -TypeName System.Net.WebClient
+                $obj.DownloadFile('http://sccmprereqs.blob.core.windows.net/cmdownloads/CMDownloads.zip','C:\Temp\CMDownloads.zip')
+                        }
+            GetScript = {return @{ 'Present' = $true }}
+            }
+
+			Archive UnpackCMDownloads
+            {
+            Ensure = "Present"
+            Path = "C:\Temp\CMDownloads.zip"
+            Destination = "C:\Temp\CMDownloads"
+            DependsOn = "[Script]DownloadCMDownloads"
+            }
 
 			File CMUnattend
 			{
