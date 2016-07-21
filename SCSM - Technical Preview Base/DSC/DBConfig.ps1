@@ -85,6 +85,7 @@ Node $nodeName
 				ProtocolName = "tcp"
 				RestartService = $true
 				TCPPort = "1433"
+				IsEnabled = $true
 				DependsOn = "[Service]StopSQLService"
 			}
 
