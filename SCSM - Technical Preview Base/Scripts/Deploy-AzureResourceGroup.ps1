@@ -56,26 +56,13 @@ if ($UploadArtifacts) {
         }
     }
 
-    # Copy Configuration Data files into staging directory
-Get-ChildItem $DSCSourceFolder -File -Filter '*.psd1' | Copy-Item -Destination $ArtifactStagingDirectory -Force
- 
-# Create DSC configuration archive
- 
-if (Test-Path -Path $DSCSourceFolder)
-{
-    Get-ChildItem -Path $DSCSourceFolder -Filter *.ps1 | ForEach-Object {
- 
-        $archiveName = $_.BaseName + '.ps1.zip'
-        $archivePath = Join-Path -Path $ArtifactStagingDirectory -ChildPath $archiveName
-         
-        # Create the .ps1.zip file DSC Archive
-        Publish-AzureRmVMDscConfiguration -ConfigurationPath $_.FullName `
-            -OutputArchivePath $archivePath `
-            -Force `
-            -Verbose
+    # Create DSC configuration archive
+    if (Test-Path $DSCSourceFolder) {
+        Add-Type -Assembly System.IO.Compression.FileSystem
+        $ArchiveFile = Join-Path $ArtifactStagingDirectory "dsc.zip"
+        Remove-Item -Path $ArchiveFile -ErrorAction SilentlyContinue
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($DSCSourceFolder, $ArchiveFile)
     }
-}
-
 
     $StorageAccountContext = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName}).Context
 
