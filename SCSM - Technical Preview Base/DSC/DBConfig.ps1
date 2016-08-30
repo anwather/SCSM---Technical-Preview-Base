@@ -357,12 +357,16 @@ Node $nodeName
 
 			Script InstallCM
 			{
-				TestScript = {}
+				TestScript = {Test-Path "C:\Program Files\Microsoft Configuration Manager"}
 				SetScript = {
-					$cmd = 'C:\Temp\CMSet\SMSSetup\Bin\x64\setup.exe /script c:\temp\cmunattend\cmunattend.ini'
-					Start-Process -FilePath $cmd -NoNewWindow -Wait -RedirectStandardOutput "C:\Temp\install.txt" | Out-Null
-
-				}
+                    Set-Location C:\
+					$cmd = 'C:\Temp\CMSetup\SMSSetup\Bin\x64\setup.exe' 
+                    $setupArgs = '/script C:\Temp\CMUnattend\CMUnattend.ini'
+					Start-Process -FilePath $cmd  -ArgumentList $setupArgs -NoNewWindow -RedirectStandardOutput "C:\Temp\install.txt" | Out-Null
+                    Write-Verbose "Sleeping 60 seconds because the installation will restart WMI"
+                    Start-Sleep -Seconds 60
+                    Write-verbose "Hope everthing is running"
+            }
 				GetScript = {return @{ 'Present' = $true }}
 				PsDscRunAsCredential = $DomainAdminCredentials
 				DependsOn = "[Script]SysMContainer"
