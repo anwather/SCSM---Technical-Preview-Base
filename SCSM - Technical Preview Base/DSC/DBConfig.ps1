@@ -312,7 +312,7 @@ Node $nodeName
 			{
 				Ensure = "Present"
 				Name = "UpdateServices-API"
-				DependsOn = "[WindowsFeature]UpdateServices-RSA"
+				DependsOn = "[WindowsFeature]UpdateServices-RSAT"
 			}
 
 			WindowsFeature UpdateServices-UI
@@ -351,9 +351,22 @@ Node $nodeName
                     $ObjectContainer.SetInfo() | Out-Null
                 }
                 GetScript = {return @{ 'Present' = $true }}
-                PsDscRunAsCredential = $cred
+                PsDscRunAsCredential = $DomainAdminCredentials
 				DependsOn = "[Script]ConfigureWSUS"
             }
+
+			Script InstallCM
+			{
+				TestScript = {}
+				SetScript = {
+					$cmd = 'C:\Temp\CMSet\SMSSetup\Bin\x64\setup.exe /script c:\temp\cmunattend\cmunattend.ini'
+					Start-Process -FilePath $cmd -NoNewWindow -Wait -RedirectStandardOutput "C:\Temp\install.txt" | Out-Null
+
+				}
+				GetScript = {return @{ 'Present' = $true }}
+				PsDscRunAsCredential = $DomainAdminCredentials
+				DependsOn = "[Script]SysMContainer"
+			}
 
 			
 
