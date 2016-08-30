@@ -258,6 +258,109 @@ Node $nodeName
             GetScript = {return @{ 'Present' = $true }}
             }
 
+			Script ExtendSchema
+            {
+        TestScript = {
+                    $String = Get-Content C:\ExtADSch.log | Select-String "Successfully extended the Active Directory schema"
+
+                    if ($null -eq $String)
+                        {
+                            return $false
+                        }
+                    else
+                        {
+                            return $true
+                        }
+                    }
+				SetScript = {
+					$exePath = "C:\Temp\CMSetup\SMSSETUP\BIN\i386\extadsch.exe"
+                    Start-Process -FilePath $exePath -NoNewWindow -Wait -RedirectStandardOutput "C:\Temp\extend.txt" | Out-Null
+
+				}
+				GetScript = {return @{ 'Present' = $true }}
+                PsDscRunAsCredential = $DomainAdminCredentials
+            }
+
+			WindowsFeature UpdateServices
+			{
+				Ensure = "Present"
+				Name = "UpdateServices"
+			}
+
+			WindowsFeature UpdateServices-WidDB
+			{
+				Ensure = "Present"
+				Name = "UpdateServices-WidDB"
+				DependsOn = "[WindowsFeature]UpdateServices"
+			}
+
+			WindowsFeature UpdateServices-Services
+			{
+				Ensure = "Present"
+				Name = "UpdateServices-Services"
+				DependsOn = "[WindowsFeature]UpdateServices-WidDB"
+			}
+
+			WindowsFeature UpdateServices-RSAT
+			{
+				Ensure = "Present"
+				Name = "UpdateServices-RSAT"
+				DependsOn = "[WindowsFeature]UpdateServices-Services"
+			}
+
+			WindowsFeature UpdateServices-API
+			{
+				Ensure = "Present"
+				Name = "UpdateServices-API"
+				DependsOn = "[WindowsFeature]UpdateServices-RSA"
+			}
+
+			WindowsFeature UpdateServices-UI
+			{
+				Ensure = "Present"
+				Name = "UpdateServices-UI"
+				DependsOn = "[WindowsFeature]UpdateServices-API"
+			}
+
+			File UpdatesStore
+			{
+				Ensure = "Present"
+				Type = "Directory"
+				DestinationPath = "C:\Updates"
+				DependsOn = "[WindowsFeature]UpdateServices-UI"
+			}
+
+			Script ConfigureWSUS
+			{
+				TestScript = {Test-Path C:\Temp\temp.txt}
+				SetScript = {
+                    $WSUSUtil = "$($Env:ProgramFiles)\Update Services\Tools\WsusUtil.exe"
+                    $WSUSUtilArgs = "POSTINSTALL CONTENT_DIR=C:\Updates"
+                    Start-Process -FilePath $WSUSUtil -ArgumentList $WSUSUtilArgs -NoNewWindow -Wait -RedirectStandardOutput "C:\Temp\temp.txt" | Out-Null
+                            }
+				GetScript = {return @{ 'Present' = $true }}
+				DependsOn = "[File]UpdatesStore"
+			}
+
+			Script SysMContainer
+            {
+                TestScript = {Test-Path C:\myfile.txt}
+                SetScript = {
+                    $ObjectDomain = New-Object System.DirectoryServices.DirectoryEntry
+                    $ObjectContainer = $ObjectDomain.Create("container", "CN=System Management,CN=System")
+                    $ObjectContainer.SetInfo() | Out-Null
+                }
+                GetScript = {return @{ 'Present' = $true }}
+                PsDscRunAsCredential = $cred
+				DependsOn = "[Script]ConfigureWSUS"
+            }
+
+			
+
+			
+
+			
+
 
 
 			

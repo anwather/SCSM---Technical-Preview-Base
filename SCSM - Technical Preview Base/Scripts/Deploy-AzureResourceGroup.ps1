@@ -58,11 +58,18 @@ if ($UploadArtifacts) {
 
     # Create DSC configuration archive
     if (Test-Path $DSCSourceFolder) {
+		Write-Output "Creating ZIP File"
+		#Get-ChildItem $DSCSourceFolder
         Add-Type -Assembly System.IO.Compression.FileSystem
         $ArchiveFile = Join-Path $ArtifactStagingDirectory "dsc.zip"
+		Write-Output "DSC Source Folder: $DSCSourceFolder"
+		Write-Output "Archive File: $ArchiveFile"
         Remove-Item -Path $ArchiveFile -ErrorAction SilentlyContinue
         [System.IO.Compression.ZipFile]::CreateFromDirectory($DSCSourceFolder, $ArchiveFile)
+		#Get-ChildItem $ArtifactStagingDirectory -Recurse
     }
+	else
+		{Write-Output "DSC Source Folder: $DSCSourceFolder"}
 
     $StorageAccountContext = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName}).Context
 
