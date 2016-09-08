@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "SCSMTPDC01Name": {
-            "value": "SCSMTPDC01"
+            "value": "CMTP-DC01"
         },
         "AdminUserName": {
             "value": "s-admin"
@@ -12,16 +12,13 @@
             "value": "Njc9addh"
         },
         "DomainAdminUserName": {
-            "value": "scsmtp\\s-admin"
+            "value": "cmtp\\s-admin"
         },
         "DomainAdminPassword": {
             "value": "Njc9addh"
         },
         "SCSMTPSM01Name": {
-            "value": "SCSMTPSM01"
-        },
-        "SCSMTPDW01Name": {
-            "value": "SCSMTPDW01"
+            "value": "CMTP-CM01"
         }
     }
 }

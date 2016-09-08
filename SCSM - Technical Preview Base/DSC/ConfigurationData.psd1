@@ -10,13 +10,13 @@
 			NodeName = 'localhost'
 			PSDscAllowDomainUser = $true
 			PSDscAllowPlainTextPassword = $true
-			DomainName = 'scsmtp.lab'
-            DomainNetBIOSName = 'SCSMTP'
+			DomainName = 'cmtp.lab'
+            DomainNetBIOSName = 'cmtp'
 			DNSServerAddress = '10.0.0.4'
             InterfaceAlias = 'Ethernet'
             AddressFamily = 'IPv4'
 			SqlSourcePath = "C:\SQLServer_12.0_Full"
-			SysAdminAccounts = 'SCSMTP\s-admin'
+			SysAdminAccounts = 'cmtp\s-admin'
 		}
 	)
 }
